@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-[#FAF9F6]" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Portal Académico UFM - Campus Digital</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Fuentes Google: Cinzel, Playfair Display e Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            crest: ['Cinzel', 'serif'],
+          },
+          colors: {
+            ufm: {
+              red: '#8B1D2C',
+              burgundy: '#7A1C29',
+              redDark: '#5E101D',
+              gold: '#C59B27',
+              goldLight: '#F7F2E6',
+              goldDark: '#997315',
+              crimsonSoft: '#FDF2F4',
+              navy: '#1A2332',
+              cream: '#FAF9F6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Reglas globales estrictas para evitar desbordes de cualquier SVG */
+    svg {
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .view-panel {
+      display: none;
+    }
+    .view-panel.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col bg-[#FAF9F6] text-[#1A2332] font-sans antialiased selection:bg-ufm-red selection:text-white">
+<!-- ============================================================ -->
+<!-- 1. CINTILLO SUPERIOR: LEMA INSTITUCIONAL UFM                -->
+<!-- ============================================================ -->
+<aside class="bg-ufm-burgundy text-ufm-goldLight text-[11px] sm:text-xs py-2 px-4 border-b border-ufm-gold/30 tracking-wide">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
+<div class="flex items-center space-x-2">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-ufm-gold shrink-0"></span>
+<span class="font-serif italic text-white/95">
+          "La enseñanza y difusión de los principios éticos, jurídicos y económicos de una sociedad de personas libres y responsables."
+        </span>
+<span class="text-ufm-gold font-sans font-semibold text-[10px] uppercase ml-1 hidden lg:inline">— Misión UFM</span>
+</div>
+<div class="flex items-center space-x-3 text-[11px] text-ufm-goldLight/90 font-medium shrink-0">
+<span class="hidden md:inline">Manuel F. Ayau • Ludwig von Mises</span>
+<span class="bg-ufm-gold/25 text-white px-2 py-0.5 rounded border border-ufm-gold/50 text-[10px] uppercase font-bold tracking-wider">
+          Propuesta Académica No Oficial
+        </span>
+</div>
+</div>
+</aside>
+<!-- ============================================================ -->
+<!-- 2. BARRA DE NAVEGACIÓN PRINCIPAL                            -->
+<!-- ============================================================ -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#8B1D2C]/20 shadow-xs">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-20 gap-4">
+<!-- Marca Institucional UFM -->
+<div class="flex items-center space-x-3.5 shrink-0">
+<div class="w-11 h-11 rounded-lg bg-ufm-burgundy text-white flex flex-col items-center justify-center border-2 border-ufm-gold shadow-sm shrink-0">
+<span class="font-crest font-bold text-base leading-none tracking-tight text-white">UFM</span>
+<span class="text-[8px] tracking-widest text-ufm-gold uppercase font-semibold mt-0.5">1971</span>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<span class="font-crest font-extrabold text-[#1A2332] tracking-wider text-base sm:text-lg">
+                UFM CAMPUS DIGITAL
+              </span>
+<span class="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-ufm-goldDark border border-ufm-gold/40">
+                Prototipo
+              </span>
+</div>
+<p class="text-[11px] text-stone-500 font-serif italic hidden sm:block">
+              Propuesta Académica No Oficial • Portal Libre y Responsable
+            </p>
+</div>
+</div>
+<!-- Tab Switcher de Roles (4 Vistas) -->
+<div class="flex items-center overflow-x-auto py-1">
+<nav class="bg-[#F2EFE9] p-1 rounded-xl flex items-center border border-stone-300 text-xs font-medium space-x-1 shrink-0" role="tablist">
+<button class="role-tab px-3 py-1.5 rounded-lg transition-all duration-150 text-stone-600 hover:text-stone-900 flex items-center space-x-1.5" id="tab-login" onclick="switchView('login')" type="button">
+<svg class="w-4 h-4 text-stone-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>1. Acceso SSO</span>
+</button>
+<button class="role-tab px-3 py-1.5 rounded-lg transition-all duration-150 text-stone-600 hover:text-stone-900 flex items-center space-x-1.5" id="tab-student" onclick="switchView('student')" type="button">
+<svg class="w-4 h-4 text-stone-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5zm0 7v-5.5m0 0l7-3.8V8M5 11.7V17l7 4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>2. Estudiante</span>
+</button>
+<button class="role-tab px-3 py-1.5 rounded-lg transition-all duration-150 bg-white text-ufm-burgundy font-semibold shadow-xs border border-stone-200 flex items-center space-x-1.5" id="tab-teacher" onclick="switchView('teacher')" type="button">
+<svg class="w-4 h-4 text-ufm-goldDark shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>3. Catedrático</span>
+</button>
+<button class="role-tab px-3 py-1.5 rounded-lg transition-all duration-150 text-stone-600 hover:text-stone-900 flex items-center space-x-1.5" id="tab-admin" onclick="switchView('admin')" type="button">
+<svg class="w-4 h-4 text-stone-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>4. Decanatura/Admin</span>
+</button>
+</nav>
+</div>
+</div>
+</div>
+</header>
+<!-- ============================================================ -->
+<!-- CONTENEDOR PRINCIPAL DINÁMICO                               -->
+<!-- ============================================================ -->
+<main class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- ========================================================== -->
+<!-- VISTA 1: ACCESO SSO (GOOGLE WORKSPACE)                     -->
+<!-- ========================================================== -->
+<div class="view-panel" id="view-login">
+<div class="max-w-4xl mx-auto py-4">
+<div class="grid grid-cols-1 md:grid-cols-12 bg-white rounded-2xl border border-stone-200/80 shadow-md overflow-hidden">
+<!-- Lado Izquierdo: Hero Editorial Filosófico Maroon -->
+<div class="md:col-span-5 bg-ufm-burgundy text-white p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden">
+<div class="absolute -right-6 -bottom-6 opacity-10 pointer-events-none select-none font-crest text-9xl text-white">UFM</div>
+<div>
+<div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20 text-xs text-ufm-goldLight">
+<span class="w-1.5 h-1.5 rounded-full bg-ufm-gold shrink-0"></span>
+<span class="font-sans font-medium">Tradición Liberal • Desde 1971</span>
+</div>
+<h2 class="text-2xl font-serif font-bold mt-6 leading-tight text-white">
+                Una Universidad para Formar Personas Libres y Responsables
+              </h2>
+<p class="text-xs text-stone-200/90 mt-3 leading-relaxed font-light">
+                Riguroso compromiso con la libertad individual, el libre mercado, el estado de derecho y el método socrático en cada aula y laboratorio.
+              </p>
+</div>
+<!-- Cita Ludwig von Mises -->
+<div class="my-6 p-4 rounded-xl bg-black/20 border-l-4 border-ufm-gold text-xs italic font-serif">
+<p class="text-stone-100">
+                "La libertad no es un fin, sino el medio para que cada ser humano pueda alcanzar todos sus fines legítimos."
+              </p>
+<span class="block mt-2 not-italic font-sans text-[11px] font-semibold text-ufm-goldLight tracking-wide">
+                — Ludwig von Mises
+              </span>
+</div>
+<div class="pt-4 border-t border-white/15 flex items-center justify-between text-[11px] text-stone-300">
+<span>Campus Central UFM</span>
+<span>Guatemala • Madrid • Online</span>
+</div>
+</div>
+<!-- Lado Derecho: Acceso Google SSO -->
+<div class="md:col-span-7 p-8 sm:p-10 flex flex-col justify-center bg-white">
+<div class="text-left mb-6">
+<div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-stone-100 text-stone-700 border border-stone-200">
+<svg class="w-4 h-4 mr-1.5 text-ufm-red shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                Google Workspace for Education SSO
+              </div>
+<h1 class="text-2xl font-serif font-bold text-[#1A2332] mt-3">Portal de Acceso Institucional</h1>
+<p class="text-xs text-stone-500 mt-1">Ingresa con tu cuenta oficial <strong>@ufm.edu</strong> o <strong>@estudiante.ufm.edu</strong>.</p>
+</div>
+<!-- Botón de SSO Google -->
+<button class="w-full flex items-center justify-center space-x-3 px-5 py-3.5 border-2 border-stone-200 hover:border-ufm-red rounded-xl hover:bg-stone-50 active:bg-stone-100 transition-all shadow-xs text-stone-700 font-semibold text-sm cursor-pointer group" id="btn-google-sso" onclick="simulateSSO('student', 'camila.morales@estudiante.ufm.edu', 'Estudiante de Grado')" type="button">
+<svg class="w-5 h-5 shrink-0 group-hover:scale-105 transition-transform" viewbox="0 0 24 24">
+<path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z" fill="#4285F4"></path>
+<path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.13C3.25 21.31 7.32 24 12 24z" fill="#34A853"></path>
+<path d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.26C.46 8.18 0 9.99 0 12s.46 3.82 1.26 5.42l4.02-3.13z" fill="#FBBC05"></path>
+<path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.32 0 3.25 2.69 1.26 6.58l4.02 3.13c.95-2.83 3.6-4.96 6.72-4.96z" fill="#EA4335"></path>
+</svg>
+<span>Continuar con Google Workspace UFM</span>
+</button>
+<!-- Feedback animado -->
+<div class="hidden mt-4 p-3 rounded-xl bg-ufm-crimsonSoft border border-ufm-red/30 text-xs text-ufm-burgundy" id="sso-feedback">
+<div class="flex items-center space-x-2 font-semibold">
+<svg class="w-4 h-4 animate-spin text-ufm-red shrink-0" fill="none" viewbox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" d="M4 12a8 8 0 018-8v8H4z" fill="currentColor"></path></svg>
+<span id="sso-feedback-text">Autenticando credenciales federadas UFM...</span>
+</div>
+</div>
+<!-- Accesos rápidos demostrativos -->
+<div class="mt-8 pt-5 border-t border-stone-200">
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-bold text-stone-700 tracking-tight uppercase">Cuentas Demostrativas (1 Clic)</span>
+<span class="text-[11px] text-stone-400">Detección de rol</span>
+</div>
+<div class="space-y-2">
+<button class="w-full flex items-center justify-between p-2.5 rounded-xl border border-stone-200 hover:border-ufm-red hover:bg-stone-50 transition-all text-left group" onclick="simulateSSO('student', 'camila.morales@estudiante.ufm.edu', 'Estudiante')" type="button">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-lg bg-ufm-crimsonSoft text-ufm-red flex items-center justify-center font-bold text-xs border border-ufm-red/20 shrink-0">CM</div>
+<div>
+<p class="text-xs font-semibold text-stone-900 group-hover:text-ufm-red">camila.morales@estudiante.ufm.edu</p>
+<p class="text-[11px] text-stone-500">Camila Morales • Computer Science &amp; Econ</p>
+</div>
+</div>
+<span class="text-[11px] font-bold text-ufm-burgundy bg-ufm-crimsonSoft px-2 py-0.5 rounded border border-ufm-red/30">Estudiante →</span>
+</button>
+<button class="w-full flex items-center justify-between p-2.5 rounded-xl border border-stone-200 hover:border-ufm-gold hover:bg-amber-50/40 transition-all text-left group" onclick="simulateSSO('teacher', 'r.valdes@ufm.edu', 'Catedrático')" type="button">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-lg bg-amber-50 text-ufm-goldDark flex items-center justify-center font-bold text-xs border border-amber-200 shrink-0">RV</div>
+<div>
+<p class="text-xs font-semibold text-stone-900 group-hover:text-amber-900">r.valdes@ufm.edu</p>
+<p class="text-[11px] text-stone-500">Dr. Roberto Valdés • Catedrático Titular</p>
+</div>
+</div>
+<span class="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Catedrático →</span>
+</button>
+<button class="w-full flex items-center justify-between p-2.5 rounded-xl border border-stone-200 hover:border-ufm-navy hover:bg-slate-50 transition-all text-left group" onclick="simulateSSO('admin', 'decanatura.ingenieria@ufm.edu', 'Decanato')" type="button">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-lg bg-slate-100 text-ufm-navy flex items-center justify-center font-bold text-xs border border-slate-300 shrink-0">DI</div>
+<div>
+<p class="text-xs font-semibold text-stone-900 group-hover:text-ufm-navy">decanatura.ingenieria@ufm.edu</p>
+<p class="text-[11px] text-stone-500">Decanatura de Ingeniería y Ciencias Económicas</p>
+</div>
+</div>
+<span class="text-[11px] font-bold text-ufm-navy bg-slate-100 px-2 py-0.5 rounded border border-slate-300">Decanatura →</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ========================================================== -->
+<!-- VISTA 2: DASHBOARD ESTUDIANTE ("MI SEMANA")                 -->
+<!-- ========================================================== -->
+<div class="view-panel" id="view-student">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Sidebar Estudiante -->
+<aside class="lg:col-span-3 bg-white rounded-xl border border-stone-200/80 p-5 shadow-xs">
+<div class="flex items-center space-x-3 pb-5 border-b border-stone-100">
+<div class="w-11 h-11 rounded-full bg-ufm-crimsonSoft border-2 border-ufm-gold flex items-center justify-center text-ufm-red font-bold text-sm shadow-xs shrink-0">
+              CM
+            </div>
+<div>
+<p class="text-sm font-bold text-[#1A2332] leading-tight font-serif">Camila Morales</p>
+<p class="text-xs text-stone-500">CS &amp; Emprendimiento • 6to Sem.</p>
+<span class="inline-block mt-1 text-[10px] font-semibold text-ufm-goldDark bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">Persona Libre y Responsable</span>
+</div>
+</div>
+<nav class="mt-5 space-y-1">
+<a class="flex items-center px-3.5 py-2.5 text-sm font-semibold text-ufm-burgundy bg-ufm-crimsonSoft rounded-xl border border-ufm-red/20" href="#">
+<svg class="w-4 h-4 mr-3 text-ufm-red shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Inicio ("Mi Semana")</span>
+</a>
+<a class="flex items-center px-3.5 py-2.5 text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-xl" href="#">
+<svg class="w-4 h-4 mr-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Mis Entregas y Coloquios</span>
+<span class="ml-auto bg-ufm-red/10 text-ufm-red text-xs px-2 py-0.5 rounded-full font-bold">3</span>
+</a>
+<a class="flex items-center px-3.5 py-2.5 text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-xl" href="#">
+<svg class="w-4 h-4 mr-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Horario &amp; Salones Ludwig von Mises</span>
+</a>
+<a class="flex items-center px-3.5 py-2.5 text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-xl" href="#">
+<svg class="w-4 h-4 mr-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Biblioteca Ludwig von Mises</span>
+</a>
+</nav>
+<div class="mt-8 pt-5 border-t border-stone-100">
+<h4 class="text-xs font-serif font-bold text-stone-500 uppercase tracking-wider mb-2">Autonomía y Disciplina</h4>
+<div class="bg-stone-50 rounded-xl p-3.5 border border-stone-200">
+<div class="flex justify-between items-center text-xs mb-1.5">
+<span class="text-stone-600 font-medium">Cumplimiento personal</span>
+<span class="font-bold text-emerald-700">75%</span>
+</div>
+<div class="w-full bg-stone-200 rounded-full h-2 overflow-hidden">
+<div class="bg-ufm-burgundy h-2 rounded-full" style="width: 75%"></div>
+</div>
+<p class="text-[11px] text-stone-500 mt-2">6 de 8 compromisos completados a tiempo</p>
+</div>
+</div>
+</aside>
+<!-- Centro: Asignaciones Estudiante -->
+<section class="lg:col-span-9 space-y-6">
+<!-- Banner Superior Maroon -->
+<div class="bg-ufm-burgundy rounded-2xl p-6 text-white shadow-md border-b-4 border-ufm-gold flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<div class="inline-flex items-center space-x-2 text-xs text-ufm-goldLight font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-ufm-gold shrink-0"></span>
+<span class="uppercase tracking-widest text-[10px]">Excelencia y Acción Humana</span>
+</div>
+<h2 class="text-2xl font-serif font-bold mt-1 text-white">¡Buen día, Camila! Tu Semana Académica</h2>
+<p class="text-xs text-stone-200/90 font-serif italic mt-0.5">
+                "En una sociedad libre, el éxito es consecuencia directa del esfuerzo personal, la integridad y el valor aportado a los demás."
+              </p>
+</div>
+<div class="flex items-center space-x-2 text-xs bg-black/25 px-3 py-2 rounded-xl border border-white/10 shrink-0">
+<span class="w-2 h-2 rounded-full bg-ufm-gold animate-pulse shrink-0"></span>
+<span class="text-stone-200 font-medium">Ciclo Académico 2024-II</span>
+</div>
+</div>
+<!-- Cabecera de Tareas -->
+<div class="bg-white rounded-xl border border-stone-200/80 p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4 shadow-xs">
+<div>
+<div class="flex items-center space-x-2">
+<h3 class="text-xl font-serif font-bold text-[#1A2332]">Mis Asignaciones y Proyectos</h3>
+<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-stone-100 text-stone-700">Semana 9 (14 - 20 Oct)</span>
+</div>
+<p class="text-xs text-stone-500 mt-1">Orden cronológico para máxima certeza y libre gestión del tiempo.</p>
+</div>
+<div class="flex items-center space-x-2 text-xs shrink-0">
+<span class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200 flex items-center">
+<svg class="w-3.5 h-3.5 mr-1 text-emerald-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                6 Entregadas a tiempo
+              </span>
+<span class="px-3 py-1.5 rounded-lg bg-ufm-crimsonSoft text-ufm-burgundy font-semibold border border-ufm-red/30 flex items-center">
+<span class="w-2 h-2 rounded-full bg-ufm-red mr-1.5 animate-pulse shrink-0"></span>
+                2 Pendientes prioritarias
+              </span>
+</div>
+</div>
+<!-- Lista de Entregas -->
+<div class="space-y-4">
+<h4 class="text-xs font-bold text-stone-500 uppercase tracking-wider flex items-center">
+<span>Próximos Vencimientos Académicos</span>
+<span class="ml-2 text-stone-400 font-normal italic font-serif">(Responsabilidad ineludible)</span>
+</h4>
+<!-- Tarea 1 -->
+<div class="bg-white rounded-xl border border-l-4 border-l-ufm-burgundy border-stone-200/80 p-5 shadow-xs hover:border-stone-300 transition-all">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-1">
+<div class="flex items-center space-x-2">
+<span class="text-xs font-bold text-ufm-burgundy bg-ufm-crimsonSoft px-2 py-0.5 rounded border border-ufm-red/20">VENCE HOY • 23:59</span>
+<span class="text-xs font-medium text-stone-500">Arquitectura de Software (G02)</span>
+</div>
+<h5 class="text-base font-serif font-bold text-stone-900">Diagrama C4 &amp; Especificación de Componentes Microservicios</h5>
+<p class="text-xs text-stone-500 line-clamp-1">Subir documento en PDF con diagramas de nivel 1 a 3 y matriz de dependencias.</p>
+</div>
+<div class="flex items-center space-x-3 shrink-0">
+<span class="text-xs text-stone-600 bg-stone-100 px-2.5 py-1 rounded-md font-medium">Valor: 20 pts</span>
+<button class="px-4 py-2 bg-ufm-burgundy hover:bg-ufm-redDark text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center" type="button">
+<svg class="w-4 h-4 mr-1.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    Subir Entrega
+                  </button>
+</div>
+</div>
+</div>
+<!-- Tarea 2 -->
+<div class="bg-white rounded-xl border border-l-4 border-l-ufm-gold border-stone-200/80 p-5 shadow-xs hover:border-stone-300 transition-all">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-1">
+<div class="flex items-center space-x-2">
+<span class="text-xs font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">MAÑANA • 18:00</span>
+<span class="text-xs font-medium text-stone-500">Proceso Económico &amp; Sistemas Complejos (G01)</span>
+</div>
+<h5 class="text-base font-serif font-bold text-stone-900">Análisis Comparado de la Teoría del Capital y Estructuras Distribuidas</h5>
+<p class="text-xs text-stone-500 line-clamp-1">Ensayo socrático fundamentado en Ludwig von Mises y la dispersión del conocimiento de Hayek.</p>
+</div>
+<div class="flex items-center space-x-3 shrink-0">
+<span class="text-xs text-stone-600 bg-stone-100 px-2.5 py-1 rounded-md font-medium">Valor: 15 pts</span>
+<button class="px-4 py-2 bg-ufm-burgundy hover:bg-ufm-redDark text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center" type="button">
+<svg class="w-4 h-4 mr-1.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    Subir Entrega
+                  </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Historial de tareas entregadas -->
+<div class="bg-white rounded-xl border border-stone-200/80 p-6 shadow-xs">
+<h4 class="text-sm font-serif font-bold text-[#1A2332] tracking-tight mb-4 flex items-center">
+<svg class="w-4 h-4 text-emerald-600 mr-2 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              Registro Histórico de Entregas Validadas
+            </h4>
+<div class="divide-y divide-stone-100 text-xs">
+<div class="py-3 flex items-center justify-between">
+<div>
+<p class="font-semibold text-stone-900">Sprint Review 2 - Repositorio GitHub y CI/CD</p>
+<p class="text-stone-400 font-serif italic">Taller de Integración Continua • Entregado el Lun 14 Oct</p>
+</div>
+<div class="flex items-center space-x-3">
+<span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md font-medium border border-emerald-200/50">Certeza confirmada</span>
+<span class="font-bold text-stone-800">95/100</span>
+</div>
+</div>
+<div class="py-3 flex items-center justify-between">
+<div>
+<p class="font-semibold text-stone-900">Laboratorio 04: Configuración de Clúster Kubernetes</p>
+<p class="text-stone-400 font-serif italic">Sistemas Distribuidos • Entregado el Dom 13 Oct</p>
+</div>
+<div class="flex items-center space-x-3">
+<span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md font-medium border border-emerald-200/50">Certeza confirmada</span>
+<span class="font-medium text-amber-700">En revisión</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- ========================================================== -->
+<!-- VISTA 3: DASHBOARD DOCENTE (CREACIÓN DE TAREA EN 3 PASOS)    -->
+<!-- ========================================================== -->
+<div class="view-panel active" id="view-teacher">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Sidebar Docente -->
+<aside class="lg:col-span-3 bg-white rounded-xl border border-stone-200/80 p-5 shadow-xs">
+<div class="flex items-center space-x-3 pb-5 border-b border-stone-100">
+<div class="w-11 h-11 rounded-full bg-amber-50 border-2 border-ufm-gold flex items-center justify-center text-ufm-goldDark font-bold text-sm shadow-xs font-serif shrink-0">
+              DR
+            </div>
+<div>
+<p class="text-sm font-bold text-[#1A2332] leading-tight font-serif">Dr. Roberto Valdés</p>
+<p class="text-xs text-stone-500">Catedrático Titular • Ciencias de la Computación</p>
+<span class="inline-block mt-1 text-[10px] font-semibold text-ufm-burgundy bg-ufm-crimsonSoft px-2 py-0.5 rounded border border-ufm-red/20">Libertad de Cátedra</span>
+</div>
+</div>
+<nav class="mt-5 space-y-1">
+<a class="flex items-center px-3.5 py-2.5 text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-xl" href="#">
+<svg class="w-4 h-4 mr-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Mis Cursos Activos</span>
+<span class="ml-auto bg-stone-100 text-stone-600 text-xs px-2 py-0.5 rounded-full font-semibold">4</span>
+</a>
+<a class="flex items-center px-3.5 py-2.5 text-sm font-medium text-stone-600 hover:text-stone-900 hover:bg-stone-50 rounded-xl" href="#">
+<svg class="w-4 h-4 mr-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Calificaciones &amp; Rúbricas</span>
+</a>
+<a class="flex items-center px-3.5 py-2.5 text-sm font-semibold text-ufm-burgundy bg-ufm-crimsonSoft rounded-xl border border-ufm-red/20" href="#">
+<svg class="w-4 h-4 mr-3 text-ufm-red shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Nueva Asignación Rápida</span>
+</a>
+</nav>
+<!-- Recordatorio Socrático UFM -->
+<div class="mt-6 p-3.5 rounded-xl bg-amber-50/70 border border-ufm-gold/30 text-xs">
+<span class="font-serif italic font-bold text-amber-900 block mb-1">Método Socrático UFM:</span>
+<p class="text-stone-600 leading-relaxed font-serif">
+              "El profesor no impone verdades acabadas; guía preguntas que despiertan el rigor deductivo y la libertad de pensamiento."
+            </p>
+</div>
+<div class="mt-6 pt-5 border-t border-stone-100">
+<h4 class="text-xs font-serif font-bold text-stone-500 uppercase tracking-wider mb-3">Resumen de Cátedra</h4>
+<div class="space-y-2 text-xs">
+<div class="flex justify-between p-2 rounded-lg bg-stone-50">
+<span class="text-stone-600">Alumnos inscritos:</span>
+<span class="font-bold text-stone-900">142</span>
+</div>
+<div class="flex justify-between p-2 rounded-lg bg-stone-50">
+<span class="text-stone-600">Entregas por evaluar:</span>
+<span class="font-bold text-ufm-burgundy">18 pendientes</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Formulario Rápido en 3 Pasos -->
+<section class="lg:col-span-9">
+<div class="bg-white rounded-xl border border-stone-200/80 overflow-hidden shadow-xs">
+<div class="p-6 border-b border-stone-100 bg-[#FAF9F6]">
+<div class="flex items-center justify-between">
+<div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-ufm-crimsonSoft text-ufm-burgundy border border-ufm-red/20">
+                    Cátedra Marroquín • Productividad y Rigor
+                  </span>
+<h2 class="text-2xl font-serif font-bold text-[#1A2332] mt-2">Creación Rápida de Asignación Académica</h2>
+<p class="text-xs text-stone-500 mt-0.5">Diseñado para publicar instrucciones claras con estándares socráticos en menos de 60 segundos.</p>
+</div>
+<div class="hidden sm:flex items-center space-x-2 text-xs text-stone-400">
+<span class="w-6 h-6 rounded-full bg-ufm-burgundy text-white flex items-center justify-center font-bold text-[10px]">1</span>
+<span>—</span>
+<span class="w-6 h-6 rounded-full bg-ufm-burgundy text-white flex items-center justify-center font-bold text-[10px]">2</span>
+<span>—</span>
+<span class="w-6 h-6 rounded-full bg-ufm-burgundy text-white flex items-center justify-center font-bold text-[10px]">3</span>
+</div>
+</div>
+</div>
+<form class="p-6 sm:p-8 space-y-7" id="quick-assignment-form" onsubmit="event.preventDefault(); alert('Asignación académica publicada con éxito a los estudiantes de la cátedra.');">
+<!-- PASO 1: SELECCIONAR CURSO -->
+<div class="space-y-3">
+<div class="flex items-center space-x-2">
+<span class="w-6 h-6 rounded-full bg-ufm-burgundy text-white flex items-center justify-center font-bold text-xs shrink-0">1</span>
+<label class="text-sm font-serif font-bold text-[#1A2332]">Seleccionar Cátedra y Sección Destino</label>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+<label class="border-2 border-ufm-burgundy bg-ufm-crimsonSoft/50 rounded-xl p-3.5 cursor-pointer flex flex-col justify-between hover:bg-ufm-crimsonSoft transition-colors">
+<input checked="" class="sr-only" name="course_select" type="radio"/>
+<span class="text-xs font-bold text-ufm-burgundy">Arquitectura de Software</span>
+<span class="text-[11px] text-stone-500 mt-1">Sección G02 • 42 estudiantes</span>
+</label>
+<label class="border border-stone-200 rounded-xl p-3.5 cursor-pointer flex flex-col justify-between hover:border-stone-300 transition-colors">
+<input class="sr-only" name="course_select" type="radio"/>
+<span class="text-xs font-bold text-stone-800">Sistemas Distribuidos</span>
+<span class="text-[11px] text-stone-500 mt-1">Sección G01 • 38 estudiantes</span>
+</label>
+<label class="border border-stone-200 rounded-xl p-3.5 cursor-pointer flex flex-col justify-between hover:border-stone-300 transition-colors">
+<input class="sr-only" name="course_select" type="radio"/>
+<span class="text-xs font-bold text-stone-800">Proceso Económico &amp; Algoritmos</span>
+<span class="text-[11px] text-stone-500 mt-1">Sección G03 • 32 estudiantes</span>
+</label>
+</div>
+</div>
+<!-- PASO 2: TÍTULO E INSTRUCCIONES -->
+<div class="space-y-4 pt-4 border-t border-stone-100">
+<div class="flex items-center space-x-2">
+<span class="w-6 h-6 rounded-full bg-ufm-burgundy text-white flex items-center justify-center font-bold text-xs shrink-0">2</span>
+<label class="text-sm font-serif font-bold text-[#1A2332]">Instrucciones Claras y Debate Socrático</label>
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-700 mb-1">Título de la Asignación</label>
+<input class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-ufm-red focus:border-transparent text-sm text-stone-900 shadow-xs" type="text" value="Caso Práctico 03: Implementación de Patrón Circuit Breaker y Resiliencia Sistémica"/>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<label class="block text-xs font-semibold text-stone-700">Requisitos, Código y Justificación Argumentada</label>
+<span class="text-[11px] text-stone-400 font-serif italic">Promueve el razonamiento crítico individual</span>
+</div>
+<textarea class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:ring-2 focus:ring-ufm-red focus:border-transparent text-sm text-stone-900 shadow-xs leading-relaxed" rows="4">1. Implementar la tolerancia a fallos utilizando Resilience4j o Polly en el microservicio financiero.
+2. Formular una defensa técnica en el README: justifique por qué el desacoplamiento es superior al control centralizado.
+3. Subir enlace al repositorio con commit criptográficamente firmado y pruebas unitarias de latencia simulada.</textarea>
+</div>
+</div>
+<!-- PASO 3: FECHA LÍMITE Y PUNTUACIÓN -->
+<div class="space-y-4 pt-4 border-t border-stone-100">
+<div class="flex items-center space-x-2">
+<span class="w-6 h-6 rounded-full bg-ufm-burgundy text-white flex items-center justify-center font-bold text-xs shrink-0">3</span>
+<label class="text-sm font-serif font-bold text-[#1A2332]">Fecha Límite y Ponderación Académica</label>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<div>
+<label class="block text-xs font-medium text-stone-700 mb-1">Fecha Límite Improrrogable</label>
+<input class="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-ufm-red text-xs" type="date" value="2024-10-25"/>
+</div>
+<div>
+<label class="block text-xs font-medium text-stone-700 mb-1">Hora Límite</label>
+<input class="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-ufm-red text-xs" type="time" value="23:59"/>
+</div>
+<div>
+<label class="block text-xs font-medium text-stone-700 mb-1">Puntos / Créditos</label>
+<div class="relative">
+<input class="w-full px-3 py-2 rounded-lg border border-stone-300 focus:ring-2 focus:ring-ufm-red text-xs" type="number" value="100"/>
+<span class="absolute right-3 top-2 text-xs text-stone-400 font-serif">pts</span>
+</div>
+</div>
+</div>
+</div>
+<!-- BOTÓN DE PUBLICACIÓN -->
+<div class="pt-6 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+<div class="flex items-center text-xs text-stone-500">
+<svg class="w-4 h-4 text-emerald-600 mr-1.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Notificación automática al buzón @estudiante.ufm.edu de los 42 matriculados.</span>
+</div>
+<button class="w-full sm:w-auto px-7 py-3 bg-ufm-burgundy hover:bg-ufm-redDark active:bg-black text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 border border-ufm-gold/30" type="submit">
+<svg class="w-4 h-4 text-ufm-goldLight shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Publicar Tarea a Estudiantes</span>
+</button>
+</div>
+</form>
+</div>
+</section>
+</div>
+</div>
+<!-- ========================================================== -->
+<!-- VISTA 4: DASHBOARD ADMINISTRATIVO / DECANATURA              -->
+<!-- ========================================================== -->
+<div class="view-panel" id="view-admin">
+<div class="space-y-7">
+<!-- Header Decanatura -->
+<div class="bg-white rounded-xl border border-stone-200/80 p-6 flex flex-col md:flex-row justify-between md:items-center gap-4 shadow-xs">
+<div>
+<div class="flex items-center space-x-2">
+<h2 class="text-2xl font-serif font-bold text-[#1A2332]">Decanatura y Gobierno Académico</h2>
+<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-ufm-goldDark border border-ufm-gold/40">Excelencia &amp; Libertad</span>
+</div>
+<p class="text-xs text-stone-500 mt-1">Supervisión en tiempo real de facultades, coloquios interdisciplinarios y comunicados oficiales del campus.</p>
+</div>
+<div class="flex items-center space-x-3 text-xs shrink-0">
+<span class="text-stone-400 font-serif italic">Ciclo Semestral: 2024-II</span>
+<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+<span class="font-medium text-stone-700">Sistemas 100% Operativos</span>
+</div>
+</div>
+<!-- 4 Tarjetas de Métricas -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+<div class="bg-white rounded-xl border border-stone-200/80 p-5 shadow-xs">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-stone-500 uppercase tracking-wider">Estudiantes Activos</span>
+<span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+</div>
+<div class="mt-3">
+<p class="text-2xl font-serif font-extrabold text-[#1A2332]">4,820</p>
+<p class="text-xs text-emerald-700 mt-1 flex items-center font-medium">
+<svg class="w-3.5 h-3.5 mr-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                +3.2% vs ciclo anterior
+              </p>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-stone-200/80 p-5 shadow-xs">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-stone-500 uppercase tracking-wider">Coloquios &amp; Avisos</span>
+<span class="w-8 h-8 rounded-lg bg-ufm-crimsonSoft text-ufm-burgundy flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+</div>
+<div class="mt-3">
+<p class="text-2xl font-serif font-extrabold text-[#1A2332]">28</p>
+<p class="text-xs text-stone-500 mt-1 font-serif italic">5 conferencias este mes</p>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-stone-200/80 p-5 shadow-xs">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-stone-500 uppercase tracking-wider">Catedráticos</span>
+<span class="w-8 h-8 rounded-lg bg-amber-50 text-ufm-goldDark flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+</div>
+<div class="mt-3">
+<p class="text-2xl font-serif font-extrabold text-[#1A2332]">114</p>
+<p class="text-xs text-stone-500 mt-1 font-serif italic">100% libertad de cátedra</p>
+</div>
+</div>
+<div class="bg-white rounded-xl border border-stone-200/80 p-5 shadow-xs">
+<div class="flex items-center justify-between">
+<span class="text-xs font-bold text-stone-500 uppercase tracking-wider">Puntualidad Global</span>
+<span class="w-8 h-8 rounded-lg bg-slate-100 text-ufm-navy flex items-center justify-center shrink-0">
+<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+</div>
+<div class="mt-3">
+<p class="text-2xl font-serif font-extrabold text-[#1A2332]">92.8%</p>
+<p class="text-xs text-emerald-700 mt-1 flex items-center font-medium">Autoexigencia alta</p>
+</div>
+</div>
+</div>
+<!-- Formulario: Comunicado a la Comunidad -->
+<div class="bg-white rounded-xl border-2 border-ufm-gold/40 p-6 sm:p-8 shadow-xs">
+<div class="flex items-center justify-between pb-6 border-b border-stone-100">
+<div>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-ufm-crimsonSoft text-ufm-burgundy border border-ufm-red/20">
+                Canal Oficial de Decanatura
+              </span>
+<h3 class="text-xl font-serif font-bold text-[#1A2332] mt-1">Publicar Convocatoria o Comunicado a la Comunidad</h3>
+<p class="text-xs text-stone-500">Envío masivo con banner en portales institucionales de estudiantes y profesores.</p>
+</div>
+<span class="text-xs font-medium text-amber-800 bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-lg hidden sm:block font-serif">
+              Canal Verificado UFM
+            </span>
+</div>
+<form class="mt-6 space-y-5" onsubmit="event.preventDefault(); alert('Aviso General de Decanatura enviado con éxito a la comunidad.');">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="md:col-span-2">
+<label class="block text-xs font-semibold text-stone-700 mb-1">Título del Comunicado o Conferencia</label>
+<input class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-ufm-red text-sm font-medium text-stone-900" type="text" value="Coloquio Anual: Libertad Económica, Inteligencia Artificial y el Futuro del Derecho"/>
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-700 mb-1">Categoría</label>
+<select class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-ufm-red text-sm text-stone-800 bg-white">
+<option selected="">Coloquios &amp; Cátedras Magistrales</option>
+<option>Convocatoria de Becas Impulso al Talento</option>
+<option>Calendario de Cierres Académicos</option>
+<option>Aviso Campus &amp; Biblioteca Ludwig von Mises</option>
+</select>
+</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-700 mb-1">Cuerpo del Comunicado</label>
+<textarea class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:ring-2 focus:ring-ufm-red text-sm text-stone-900" placeholder="Escribe el mensaje institucional detallado..." rows="3">Invitamos a los estudiantes y catedráticos al Coloquio en el Auditorio Milton Friedman este jueves a las 18:00 hrs. Discutiremos el impacto de los modelos fundacionales abiertos y la soberanía tecnológica en un marco de libertad individual. Habrá espacio para preguntas socráticas.</textarea>
+</div>
+<div class="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-stone-100 gap-4">
+<div class="flex items-center space-x-4 text-xs text-stone-600">
+<label class="flex items-center space-x-2 cursor-pointer">
+<input checked="" class="rounded text-ufm-red focus:ring-ufm-red h-4 w-4" type="checkbox"/>
+<span>Banner superior en portal web</span>
+</label>
+<label class="flex items-center space-x-2 cursor-pointer">
+<input checked="" class="rounded text-ufm-red focus:ring-ufm-red h-4 w-4" type="checkbox"/>
+<span>Notificación a correo @ufm.edu</span>
+</label>
+</div>
+<button class="w-full sm:w-auto px-6 py-2.5 bg-ufm-burgundy hover:bg-ufm-redDark text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center space-x-2 border border-ufm-gold/40" type="submit">
+<svg class="w-4 h-4 text-ufm-goldLight shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span>Enviar Comunicado a Toda la Facultad</span>
+</button>
+</div>
+</form>
+</div>
+<!-- Registro de Comunicados Recientes -->
+<div class="bg-white rounded-xl border border-stone-200/80 p-6 shadow-xs">
+<h4 class="text-sm font-serif font-bold text-[#1A2332] mb-4">Registro de Comunicados Enviados Recientemente</h4>
+<div class="divide-y divide-stone-100 text-xs">
+<div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<p class="font-bold text-stone-900 font-serif">Apertura del Centro de Recursos para la Libertad Económica</p>
+<p class="text-stone-400 font-serif italic">Publicado hace 3 días por Rectoría • Alcance: 4,820 miembros</p>
+</div>
+<span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded font-medium w-fit border border-emerald-200">Activo en portal</span>
+</div>
+<div class="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<p class="font-bold text-stone-900 font-serif">Horarios Especiales de la Biblioteca Ludwig von Mises durante Exámenes</p>
+<p class="text-stone-400 font-serif italic">Publicado hace 7 días por Dirección Académica</p>
+</div>
+<span class="text-stone-500 bg-stone-100 px-2.5 py-1 rounded font-medium w-fit">Archivado</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- ============================================================ -->
+<!-- FOOTER INSTITUCIONAL ELEGANTE UFM                           -->
+<!-- ============================================================ -->
+<footer class="mt-auto bg-white border-t border-stone-200 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+<div class="flex items-center space-x-3">
+<div class="w-7 h-7 rounded bg-ufm-burgundy text-white flex items-center justify-center font-crest text-xs font-bold border border-ufm-gold shrink-0">
+            UFM
+          </div>
+<div>
+<span class="font-serif font-bold text-stone-800">Universidad Francisco Marroquín</span>
+<span class="mx-2 text-stone-300">|</span>
+<span class="text-ufm-burgundy font-medium bg-ufm-crimsonSoft px-2 py-0.5 rounded border border-ufm-red/20">
+              Propuesta Académica No Oficial
+            </span>
+</div>
+</div>
+<div class="font-serif italic text-stone-600 text-center md:text-left">
+          "En una sociedad de personas libres y responsables." — Misión UFM
+        </div>
+<div class="text-stone-400 text-right">
+          Inspirado en el ideario liberal • Rigor intelectual y excelencia
+        </div>
+</div>
+</div>
+</footer>
+<!-- ============================================================ -->
+<!-- JAVASCRIPT: CAMBIO DE VISTAS Y SIMULACIÓN SSO                -->
+<!-- ============================================================ -->
+<script>
+    function switchView(viewName) {
+      // 1. Ocultar todos los paneles
+      const panels = document.querySelectorAll('.view-panel');
+      panels.forEach(p => p.classList.remove('active'));
+
+      // 2. Desactivar estilos de tabs
+      const tabs = document.querySelectorAll('.role-tab');
+      tabs.forEach(t => {
+        t.classList.remove('bg-white', 'text-ufm-burgundy', 'font-semibold', 'shadow-xs', 'border', 'border-stone-200');
+        t.classList.add('text-stone-600');
+      });
+
+      // 3. Activar panel correspondiente
+      const targetPanel = document.getElementById('view-' + viewName);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+
+      // 4. Activar pestaña visualmente
+      const targetTab = document.getElementById('tab-' + viewName);
+      if (targetTab) {
+        targetTab.classList.remove('text-stone-600');
+        targetTab.classList.add('bg-white', 'text-ufm-burgundy', 'font-semibold', 'shadow-xs', 'border', 'border-stone-200');
+      }
+
+      // 5. Scroll arriba suave
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function simulateSSO(role, email, roleName) {
+      const feedback = document.getElementById('sso-feedback');
+      const text = document.getElementById('sso-feedback-text');
+      if (feedback && text) {
+        feedback.classList.remove('hidden');
+        text.textContent = 'Autenticando ' + email + ' vía Google Workspace UFM... Detectando rol institucional: ' + roleName + ' verificado.';
+      }
+      setTimeout(function() {
+        switchView(role);
+        if (feedback) {
+          feedback.classList.add('hidden');
+        }
+      }, 700);
+    }
+  </script>
+</body></html>

@@ -1,0 +1,6 @@
+{
+  "name": "MIU Reimagined — Edición Académica UFM",
+  "description": "Plataforma de gestión académica inspirada en la filosofía pedagógica de la Universidad Francisco Marroquín (UFM): rigor intelectual, método socrático y certeza académica.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

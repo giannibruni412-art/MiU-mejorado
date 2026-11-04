@@ -1,0 +1,102 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-academic-crimson: #7A1C29;
+  --color-academic-crimson-light: #9B1B30;
+  --color-academic-crimson-dark: #5E101D;
+  --color-academic-crimson-soft: #FDF2F4;
+
+  --color-academic-gold: #C59B27;
+  --color-academic-gold-dark: #B8860B;
+  --color-academic-gold-deep: #997315;
+  --color-academic-gold-light: #F7F2E6;
+
+  --color-academic-green: #059669;
+  --color-academic-green-light: #ECFDF5;
+  --color-academic-green-dark: #065F46;
+
+  --color-academic-surface: #F9FAFB;
+  --color-academic-surface-alt: #F9F9FF;
+  --color-academic-surface-ivory: #FAF9F6;
+  --color-academic-card: #FFFFFF;
+  --color-academic-border: #E5E7EB;
+  --color-academic-subtle: #E2E8F0;
+
+  --color-ufm-red: #9B1B30;
+  --color-ufm-burgundy: #7A1C29;
+  --color-ufm-redDark: #5E101D;
+  --color-ufm-gold: #C59B27;
+  --color-ufm-goldLight: #F7F2E6;
+  --color-ufm-goldDark: #B8860B;
+  --color-ufm-crimsonSoft: #FDF2F4;
+  --color-ufm-navy: #1A2332;
+  --color-ufm-cream: #FAF9F6;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Playfair Display', 'Merriweather', Georgia, serif;
+  --font-editorial: 'Merriweather', 'Playfair Display', Georgia, serif;
+  --font-crest: 'Cinzel', Georgia, serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #F9FAFB;
+    color: #111827;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+
+  html.dark body {
+    background-color: #0F172A;
+    color: #F8FAFC;
+  }
+}
+
+/* Cohesive UFM Academic Dark Mode (Modo Nocturno Académico) */
+html.dark .bg-\[\#F9FAFB\],
+html.dark .bg-\[\#FAF9F6\],
+html.dark .bg-\[\#F3F4F6\] {
+  background-color: #0F172A;
+}
+
+html.dark .bg-white,
+html.dark .bg-white\/95 {
+  background-color: #1E293B;
+}
+
+html.dark .border-\[\#E5E7EB\],
+html.dark .border-\[\#E2E8F0\],
+html.dark .border-\[\#D1D5DB\] {
+  border-color: #334155;
+}
+
+html.dark .divide-\[\#E5E7EB\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155;
+}
+
+html.dark .text-\[\#111827\],
+html.dark .text-\[\#1F2937\],
+html.dark .text-\[\#374151\] {
+  color: #F8FAFC;
+}
+
+html.dark .text-\[\#4B5563\],
+html.dark .text-\[\#6B7280\] {
+  color: #94A3B8;
+}
+
+html.dark .bg-\[\#FDF2F4\],
+html.dark .bg-\[\#FDF2F4\]\/50,
+html.dark .bg-\[\#FDF2F4\]\/40 {
+  background-color: rgba(122, 28, 41, 0.25);
+}
+
+html.dark .text-\[\#7A1C29\] {
+  color: #FDA4AF;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
