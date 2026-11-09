@@ -1,6 +1,6 @@
-export type UserRole = 'student' | 'faculty' | 'admin';
+export type UserRole = 'student';
 
-export type RoutePath = '/login' | '/student/dashboard' | '/faculty/dashboard' | '/admin/dashboard';
+export type RoutePath = '/login' | '/student/dashboard';
 
 export interface UserProfile {
   id: string;
@@ -12,6 +12,7 @@ export interface UserProfile {
   semesterOrTitle: string;
   credits?: number;
   badgeText: string;
+  avatarUrl?: string;
 }
 
 export type UrgencyHorizon = 'Hoy' | 'Mañana' | 'Próxima semana';

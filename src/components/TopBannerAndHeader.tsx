@@ -1,9 +1,6 @@
 import React from 'react';
 import {
-  LogIn,
-  GraduationCap,
-  BookOpenCheck,
-  Building2,
+  LogOut,
   Megaphone,
   X,
 } from 'lucide-react';
@@ -19,6 +16,7 @@ interface TopBannerAndHeaderProps {
   onNavigate: (route: RoutePath) => void;
   activeBannerAnnouncement?: InstitutionalAnnouncement;
   onDismissBanner: () => void;
+  onSignOut?: () => void;
 }
 
 export const TopBannerAndHeader: React.FC<TopBannerAndHeaderProps> = ({
@@ -27,45 +25,8 @@ export const TopBannerAndHeader: React.FC<TopBannerAndHeaderProps> = ({
   onNavigate,
   activeBannerAnnouncement,
   onDismissBanner,
+  onSignOut,
 }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-
-  const navTabs: {
-    route: RoutePath;
-    id: string;
-    label: string;
-    shortLabel: string;
-    icon: React.ReactNode;
-  }[] = [
-    {
-      route: '/login',
-      id: 'tab-login',
-      label: '1. Acceso SSO',
-      shortLabel: '1. Acceso SSO',
-      icon: <LogIn className="w-4 h-4 shrink-0" aria-hidden="true" />,
-    },
-    {
-      route: '/student/dashboard',
-      id: 'tab-student',
-      label: '2. Estudiante',
-      shortLabel: '2. Estudiante',
-      icon: <GraduationCap className="w-4 h-4 shrink-0" aria-hidden="true" />,
-    },
-    {
-      route: '/faculty/dashboard',
-      id: 'tab-teacher',
-      label: '3. Catedrático',
-      shortLabel: '3. Catedrático',
-      icon: <BookOpenCheck className="w-4 h-4 shrink-0" aria-hidden="true" />,
-    },
-    {
-      route: '/admin/dashboard',
-      id: 'tab-admin',
-      label: '4. Decanatura',
-      shortLabel: '4. Decanatura',
-      icon: <Building2 className="w-4 h-4 shrink-0" aria-hidden="true" />,
-    },
-  ];
 
   return (
     <>
@@ -122,36 +83,9 @@ export const TopBannerAndHeader: React.FC<TopBannerAndHeaderProps> = ({
               </div>
             </button>
 
-            {/* Zone 2: Desktop Interactive Role / Route Switcher Tabs */}
-            <nav
-              aria-label="Selector de vistas del prototipo"
-              className="hidden md:flex bg-[#F3F4F6] p-1 rounded-lg items-center border border-[#E5E7EB] text-xs font-medium gap-1"
-            >
-              {navTabs.map((tab) => {
-                const isActive = currentRoute === tab.route;
-                return (
-                  <button
-                    key={tab.route}
-                    id={tab.id}
-                    type="button"
-                    onClick={() => onNavigate(tab.route)}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${
-                      isActive
-                        ? 'bg-white text-[#7A1C29] font-semibold shadow-2xs border border-[#E5E7EB]'
-                        : 'text-[#4B5563] hover:text-[#111827]'
-                    }`}
-                  >
-                    {tab.icon}
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-
-            {/* Zone 3: Active Institutional Session Indicator + Mobile Hamburger Button */}
+            {/* Zone 2: Active Institutional Session Indicator & Logout */}
             <div className="flex items-center gap-2.5 shrink-0">
-              <div className="hidden lg:block text-right">
+              <div className="text-right">
                 <p className="text-xs font-semibold text-[#111827] leading-none whitespace-nowrap">
                   {currentUser.name}
                 </p>
@@ -159,60 +93,41 @@ export const TopBannerAndHeader: React.FC<TopBannerAndHeaderProps> = ({
                   {currentUser.email}
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-[#FDF2F4] border border-[#7A1C29]/30 text-[#7A1C29] font-bold text-xs flex items-center justify-center shrink-0">
-                {currentUser.initials}
-              </div>
-              <button
-                type="button"
-                aria-label="Alternar menú de navegación móvil"
-                aria-expanded={mobileMenuOpen}
-                onClick={() => setMobileMenuOpen((v) => !v)}
-                className="md:hidden p-2 rounded-md border border-[#E5E7EB] text-[#111827] hover:bg-[#F9FAFB] cursor-pointer"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? 'M6 18L18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} />
-                </svg>
-              </button>
+
+              {currentUser.avatarUrl ? (
+                <img
+                  src={currentUser.avatarUrl}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-full object-cover border border-[#7A1C29]/30 shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#FDF2F4] border border-[#7A1C29]/30 text-[#7A1C29] font-bold text-xs flex items-center justify-center shrink-0">
+                  {currentUser.initials}
+                </div>
+              )}
+
+              {onSignOut && currentRoute !== '/login' && (
+                <button
+                  type="button"
+                  id="btn-header-signout"
+                  onClick={onSignOut}
+                  title="Cerrar sesión institucional"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-[#E5E7EB] hover:bg-[#F9FAFB] text-[#4B5563] hover:text-[#9B1B30] transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>Salir</span>
+                </button>
+              )}
             </div>
           </div>
-
-          {/* Collapsible Mobile Hamburger Navigation */}
-          {mobileMenuOpen && (
-            <nav
-              aria-label="Navegación móvil de roles"
-              className="md:hidden py-3 border-t border-[#E5E7EB] grid grid-cols-2 gap-2"
-            >
-              {navTabs.map((tab) => {
-                const isActive = currentRoute === tab.route;
-                return (
-                  <button
-                    key={tab.route}
-                    type="button"
-                    onClick={() => {
-                      onNavigate(tab.route);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`px-3 py-2 rounded-md text-xs font-medium flex items-center gap-2 cursor-pointer ${
-                      isActive
-                        ? 'bg-[#FDF2F4] text-[#7A1C29] font-semibold border border-[#7A1C29]/25'
-                        : 'bg-[#F9FAFB] text-[#4B5563] border border-[#E5E7EB]'
-                    }`}
-                  >
-                    {tab.icon}
-                    <span className="truncate">{tab.shortLabel}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          )}
         </div>
       </header>
 
-      {/* 3. Banner Global de Comunicados Oficiales de Decanatura (si está activo) */}
+      {/* 3. Banner Global de Comunicados Académicos UFM (si está activo) */}
       {activeBannerAnnouncement && currentRoute !== '/login' && (
         <div
           role="region"
-          aria-label="Boletín institucional prioritario"
+          aria-label="Boletín académico prioritario"
           className={`border-b px-4 py-2.5 text-xs transition-colors ${
             activeBannerAnnouncement.urgency === 'Urgente'
               ? 'bg-[#FEF2F2] border-[#FECACA] text-[#991B1B]'

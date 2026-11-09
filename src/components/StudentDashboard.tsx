@@ -27,6 +27,7 @@ import {
   resolveSubmissionHistory,
 } from '../utils/academicLogic';
 import { SubmissionHistoryModal } from './SubmissionHistoryModal';
+import { IntegrityVerifierModal } from './IntegrityVerifierModal';
 
 interface StudentDashboardProps {
   student: UserProfile;
@@ -60,6 +61,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   const [activeUploadAssignment, setActiveUploadAssignment] = useState<Assignment | null>(null);
   const [activeRubricAssignment, setActiveRubricAssignment] = useState<Assignment | null>(null);
   const [activeHistoryAssignment, setActiveHistoryAssignment] = useState<Assignment | null>(null);
+  const [isVerifierOpen, setIsVerifierOpen] = useState(false);
+
 
   // Certainty Drawer Form State
   const [fileName, setFileName] = useState('');
@@ -172,9 +175,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       >
         {/* Perfil del estudiante con créditos */}
         <div className="flex items-center gap-3 pb-5 border-b border-[#E5E7EB]">
-          <div className="w-11 h-11 rounded-full bg-[#FDF2F4] border border-[#C59B27] flex items-center justify-center text-[#7A1C29] font-bold text-sm shrink-0">
-            {student.initials}
-          </div>
+          {student.avatarUrl ? (
+            <img
+              src={student.avatarUrl}
+              alt={student.name}
+              className="w-11 h-11 rounded-full object-cover border border-[#C59B27] shrink-0"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-[#FDF2F4] border border-[#C59B27] flex items-center justify-center text-[#7A1C29] font-bold text-sm shrink-0">
+              {student.initials}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-sm font-bold text-[#111827] leading-tight font-serif truncate">
               {student.name}
@@ -231,7 +242,21 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             <Calendar className="w-4 h-4 mr-3 shrink-0" aria-hidden="true" />
             <span className="whitespace-nowrap">Horario Semanal</span>
           </button>
+
+          <button
+            type="button"
+            id="nav-btn-verifier"
+            onClick={() => setIsVerifierOpen(true)}
+            className="w-full flex items-center px-3.5 py-2.5 text-sm rounded-lg transition-colors cursor-pointer font-medium text-[#4B5563] hover:text-[#111827] hover:bg-[#F9FAFB]"
+          >
+            <ShieldCheck className="w-4 h-4 mr-3 shrink-0 text-[#059669]" aria-hidden="true" />
+            <span className="whitespace-nowrap">Verificador de Integridad</span>
+            <span className="ml-auto text-[10px] font-bold text-[#059669] bg-[#ECFDF5] px-1.5 py-0.5 rounded border border-[#A7F3D0]">
+              SHA-256
+            </span>
+          </button>
         </nav>
+
 
         {/* Barra de Autonomía y Disciplina */}
         <div className="mt-8 pt-5 border-t border-[#E5E7EB]">
@@ -450,15 +475,27 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
             {/* SECCIÓN DE TAREAS ENTREGADAS (CONFIRMACIÓN INMUTABLE & RÚBRICAS) */}
             <div className="bg-white rounded-lg border border-[#E5E7EB] p-6 shadow-2xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E5E7EB]">
-                <h3 className="text-sm font-serif font-bold text-[#111827] flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" aria-hidden="true" />
-                  <span>Tareas Entregadas — Registro Histórico de Certeza Inmutable</span>
-                </h3>
-                <span className="text-xs text-[#6B7280] tabular-nums">
-                  {submittedAssignments.length} entregas verificadas con hash SHA-256
-                </span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-[#E5E7EB]">
+                <div>
+                  <h3 className="text-sm font-serif font-bold text-[#111827] flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" aria-hidden="true" />
+                    <span>Tareas Entregadas — Registro Histórico de Certeza Inmutable</span>
+                  </h3>
+                  <span className="text-xs text-[#6B7280] tabular-nums">
+                    {submittedAssignments.length} entregas verificadas con hash SHA-256
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  id="btn-open-verifier-section"
+                  onClick={() => setIsVerifierOpen(true)}
+                  className="px-3 py-1.5 rounded border border-[#059669]/30 bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#065F46] font-semibold text-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap self-start sm:self-center shadow-2xs"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
+                  <span>Validar Hash Manualmente</span>
+                </button>
               </div>
+
 
               <div className="divide-y divide-[#E5E7EB] text-xs">
                 {submittedAssignments.map((item) => (
@@ -852,7 +889,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           isDarkMode={isDarkMode}
         />
       )}
+
+      {/* MODAL DE VERIFICADOR DE INTEGRIDAD MANUAL DE HASH */}
+      <IntegrityVerifierModal
+        assignments={assignments}
+        isOpen={isVerifierOpen}
+        onClose={() => setIsVerifierOpen(false)}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 };
+
 

@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
-import { ShieldCheck, ArrowRight, CheckCircle2, Info } from 'lucide-react';
-import { resolveRoleFromEmail, RoleResolutionResult } from '../utils/academicLogic';
+import { ShieldCheck, ArrowRight, CheckCircle2, Info, Loader2, ShieldAlert, Lock, AlertCircle } from 'lucide-react';
+import {
+  checkEmailAuthorization,
+  resolveRoleFromEmail,
+  RoleResolutionResult,
+  AUTHORIZED_STUDENT_EMAILS,
+} from '../utils/academicLogic';
+import { googleSignIn } from '../utils/googleAuth';
 
 interface LoginPortalProps {
   onCompleteSSO: (resolution: RoleResolutionResult) => void;
+  externalNotice?: string | null;
 }
 
-export const LoginPortal: React.FC<LoginPortalProps> = ({ onCompleteSSO }) => {
-  const [customEmail, setCustomEmail] = useState('camila.morales@estudiante.ufm.edu');
+export const LoginPortal: React.FC<LoginPortalProps> = ({ onCompleteSSO, externalNotice }) => {
+  const [customEmail, setCustomEmail] = useState('ofernando@ufm.edu');
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+  const [unauthorizedEmailState, setUnauthorizedEmailState] = useState<string | null>(null);
   const [feedbackState, setFeedbackState] = useState<{
     email: string;
     roleLabel: string;
@@ -15,20 +24,64 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({ onCompleteSSO }) => {
   } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const handleRealGoogleSignIn = async () => {
+    setIsLoadingGoogle(true);
+    setErrorMessage(null);
+    setUnauthorizedEmailState(null);
+    try {
+      const result = await googleSignIn();
+      setFeedbackState({
+        email: result.userProfile.email,
+        roleLabel: 'Portal Estudiantil (/student/dashboard)',
+        claimDescription: 'Sesión Google Workspace verificada exitosamente · Alumno Autorizado',
+      });
+      onCompleteSSO(result.resolution);
+    } catch (err: any) {
+      console.error('Error during Google sign-in:', err);
+      if (err?.code === 'auth/unauthorized-account') {
+        const attemptedEmail = err.unauthorizedEmail || 'la cuenta seleccionada';
+        setUnauthorizedEmailState(attemptedEmail);
+        setErrorMessage(
+          `Acceso No Autorizado: '${attemptedEmail}' no figura en el padrón de alumnos matriculados para este ciclo académico. Cuentas autorizadas: ${AUTHORIZED_STUDENT_EMAILS.join(', ')}.`
+        );
+      } else if (err?.code === 'auth/popup-closed-by-user') {
+        setErrorMessage('La ventana de Google se cerró antes de completar la autenticación. Intenta nuevamente.');
+      } else if (err?.code === 'auth/cancelled-popup-request') {
+        setErrorMessage('Solicitud cancelada por apertura múltiple.');
+      } else if (err?.code === 'auth/popup-blocked') {
+        setErrorMessage('El navegador bloqueó la ventana emergente de Google. Por favor permite popups para este sitio.');
+      } else {
+        setErrorMessage(
+          err?.message || 'Ocurrió un error al conectar con Google Workspace. Verifica tu conexión.'
+        );
+      }
+    } finally {
+      setIsLoadingGoogle(false);
+    }
+  };
+
   const triggerSSOFlow = (emailToAuthenticate: string) => {
     const trimmed = emailToAuthenticate.trim();
     if (!trimmed || !trimmed.includes('@')) {
-      setErrorMessage('Ingresa un correo institucional válido (ej. usuario@ufm.edu).');
+      setErrorMessage('Ingresa un correo institucional válido (ej. ofernando@ufm.edu).');
       return;
     }
+
+    // Strict Authorization Check: Only authorized emails can proceed
+    const authCheck = checkEmailAuthorization(trimmed);
+    if (!authCheck.isAuthorized) {
+      setUnauthorizedEmailState(trimmed);
+      setErrorMessage(
+        authCheck.reason ||
+          `Acceso No Autorizado (403): La cuenta '${trimmed}' no está matriculada en este ciclo académico.`
+      );
+      return;
+    }
+
     setErrorMessage(null);
+    setUnauthorizedEmailState(null);
     const resolution = resolveRoleFromEmail(trimmed);
-    const roleLabel =
-      resolution.role === 'student'
-        ? 'Estudiante (/student/dashboard)'
-        : resolution.role === 'faculty'
-        ? 'Catedrático (/faculty/dashboard)'
-        : 'Decanatura / Admin (/admin/dashboard)';
+    const roleLabel = 'Portal Estudiantil (/student/dashboard)';
 
     setFeedbackState({
       email: trimmed,
@@ -41,30 +94,43 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({ onCompleteSSO }) => {
 
   const demoAccounts = [
     {
+      email: 'giannibruni412@gmail.com',
+      name: 'Gianni Bruni',
+      subtitle: 'Computer Science & Economía · Alumno Autorizado',
+      initials: 'GB',
+      roleBadge: 'Cuenta Autorizada →',
+      badgeColors: 'text-[#065F46] bg-[#ECFDF5] border-[#A7F3D0]',
+      authorized: true,
+    },
+    {
+      email: 'ofernando@ufm.edu',
+      name: 'Fernando O.',
+      subtitle: 'Facultad de Ciencias Económicas · Alumno Autorizado',
+      initials: 'FO',
+      roleBadge: 'Cuenta Autorizada UFM →',
+      badgeColors: 'text-[#065F46] bg-[#ECFDF5] border-[#A7F3D0]',
+      authorized: true,
+    },
+    {
       email: 'camila.morales@estudiante.ufm.edu',
       name: 'Camila Morales',
-      subtitle: 'Computer Science & Economía · 6to Semestre',
+      subtitle: 'Computer Science & Economía · Alumna Registrada',
       initials: 'CM',
-      roleBadge: 'Estudiante →',
+      roleBadge: 'Cuenta Registrada →',
       badgeColors: 'text-[#7A1C29] bg-[#FDF2F4] border-[#7A1C29]/25',
+      authorized: true,
     },
     {
-      email: 'r.valdes@ufm.edu',
-      name: 'Dr. Roberto Valdés',
-      subtitle: 'Catedrático Titular · Ciencias de la Computación',
-      initials: 'RV',
-      roleBadge: 'Catedrático →',
-      badgeColors: 'text-[#92400E] bg-[#FFFBEB] border-[#FDE68A]',
-    },
-    {
-      email: 'decanatura@ufm.edu',
-      name: 'Decanatura de Ingeniería',
-      subtitle: 'Gobierno Académico y Coordinación General',
-      initials: 'DI',
-      roleBadge: 'Decanatura →',
-      badgeColors: 'text-[#1A2332] bg-[#F1F5F9] border-[#CBD5E1]',
+      email: 'usuario.no.autorizado@gmail.com',
+      name: 'Usuario Externo',
+      subtitle: 'Sin matrícula activa en claustro',
+      initials: 'UX',
+      roleBadge: 'Prueba Bloqueo 403 ✕',
+      badgeColors: 'text-[#991B1B] bg-[#FEF2F2] border-[#FECACA]',
+      authorized: false,
     },
   ];
+
 
   return (
     <div className="max-w-4xl mx-auto py-4">
@@ -116,77 +182,168 @@ export const LoginPortal: React.FC<LoginPortalProps> = ({ onCompleteSSO }) => {
             </p>
           </div>
 
-          {/* Input de correo institucional + CTA Principal Google Workspace */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              triggerSSOFlow(customEmail);
-            }}
-            className="space-y-3"
-          >
-            <div>
-              <label
-                htmlFor="sso-email-input"
-                className="block text-xs font-medium text-[#111827] mb-1"
-              >
-                Correo Institucional Google Workspace
-              </label>
-              <input
-                id="sso-email-input"
-                type="email"
-                value={customEmail}
-                onChange={(e) => setCustomEmail(e.target.value)}
-                placeholder="nombre.apellido@estudiante.ufm.edu"
-                className="w-full h-10 px-3.5 rounded bg-white border border-[#E5E7EB] text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#9B1B30] focus:ring-1 focus:ring-[#9B1B30]"
-              />
-              {errorMessage && (
-                <p role="alert" className="text-xs text-[#DC2626] mt-1 font-medium">
-                  {errorMessage}
-                </p>
-              )}
+          {/* External Access Restriction Notice */}
+          {externalNotice && !unauthorizedEmailState && (
+            <div
+              role="alert"
+              className="mb-4 p-3 rounded-md bg-[#FEF2F2] border border-[#FCA5A5] text-xs text-[#991B1B] flex items-start gap-2.5"
+            >
+              <Lock className="w-4 h-4 text-[#B91C1C] shrink-0 mt-0.5" aria-hidden="true" />
+              <div>
+                <p className="font-bold">Acceso Restringido al Portal Estudiantil</p>
+                <p className="mt-0.5 text-stone-700">{externalNotice}</p>
+              </div>
             </div>
+          )}
 
+          {/* Unauthorized Email Alert (403 Forbidden) */}
+          {unauthorizedEmailState ? (
+            <div
+              role="alert"
+              id="alert-unauthorized-access"
+              className="mb-5 p-4 rounded-lg bg-[#FEF2F2] border border-[#DC2626]/40 shadow-xs text-xs text-[#7F1D1D]"
+            >
+              <div className="flex items-start gap-3">
+                <ShieldAlert className="w-5 h-5 text-[#DC2626] shrink-0 mt-0.5" aria-hidden="true" />
+                <div className="space-y-1.5 flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-sm text-[#991B1B] font-serif">
+                      Acceso No Autorizado (Código 403 · Matrícula No Encontrada)
+                    </p>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-[#FEE2E2] text-[#991B1B] rounded border border-[#F87171]">
+                      Bloqueado
+                    </span>
+                  </div>
+                  <p className="leading-relaxed">
+                    La cuenta <strong className="font-mono bg-white px-1.5 py-0.5 rounded border border-[#FECACA]">{unauthorizedEmailState}</strong> no figura en el padrón de alumnos autorizados para el ciclo académico vigente.
+                  </p>
+                  <p className="text-[11px] text-[#991B1B]/90">
+                    Cuentas con acceso autorizado: <strong className="font-mono font-bold text-[#065F46] bg-[#ECFDF5] px-1.5 py-0.5 rounded border border-[#A7F3D0]">giannibruni412@gmail.com</strong>, <strong className="font-mono font-bold text-[#065F46] bg-[#ECFDF5] px-1.5 py-0.5 rounded border border-[#A7F3D0]">ofernando@ufm.edu</strong>
+                  </p>
+                  <div className="pt-2 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUnauthorizedEmailState(null);
+                        setErrorMessage(null);
+                        setCustomEmail('ofernando@ufm.edu');
+                      }}
+                      className="text-xs font-semibold underline text-[#991B1B] hover:text-[#7F1D1D] cursor-pointer"
+                    >
+                      Restablecer a cuenta autorizada (ofernando@ufm.edu)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : errorMessage ? (
+            <div
+              role="alert"
+              className="mb-4 p-3 rounded-md bg-[#FEF2F2] border border-[#FECACA] text-xs text-[#991B1B] flex items-start gap-2"
+            >
+              <Info className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" aria-hidden="true" />
+              <div className="flex-1">
+                <p className="font-semibold">Atención al autenticar</p>
+                <p className="mt-0.5">{errorMessage}</p>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Botón Principal: Inicio de Sesión Real con Google Workspace */}
+          <div className="space-y-4">
             <button
               id="btn-google-sso"
-              type="submit"
-              className="w-full flex items-center justify-center gap-3 px-5 py-3 border border-[#7A1C29] bg-[#9B1B30] hover:bg-[#7A1C29] text-white rounded-md transition-colors shadow-2xs font-semibold text-sm cursor-pointer whitespace-nowrap"
+              type="button"
+              disabled={isLoadingGoogle}
+              onClick={handleRealGoogleSignIn}
+              className="w-full flex items-center justify-center gap-3 px-5 py-3.5 border border-[#7A1C29] bg-[#9B1B30] hover:bg-[#7A1C29] active:bg-[#60121C] text-white rounded-md transition-all shadow-sm hover:shadow-md font-semibold text-sm cursor-pointer whitespace-nowrap disabled:opacity-60 disabled:cursor-wait"
             >
-              <svg className="w-4 h-4 shrink-0 bg-white rounded-xs p-0.5" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.13C3.25 21.31 7.32 24 12 24z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.26C.46 8.18 0 9.99 0 12s.46 3.82 1.26 5.42l4.02-3.13z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.32 0 3.25 2.69 1.26 6.58l4.02 3.13c.95-2.83 3.6-4.96 6.72-4.96z"
-                  fill="#EA4335"
-                />
-              </svg>
-              <span>Continue with Google Workspace</span>
+              {isLoadingGoogle ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" aria-hidden="true" />
+                  <span>Conectando con Google Workspace...</span>
+                </>
+              ) : (
+                <>
+                  <div className="w-5 h-5 rounded-xs bg-white flex items-center justify-center p-0.5 shrink-0 shadow-2xs">
+                    <svg className="w-full h-full" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.665-5.17 3.665-9.12z"
+                        fill="#4285F4"
+                      />
+                      <path
+                        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.13C3.25 21.31 7.32 24 12 24z"
+                        fill="#34A853"
+                      />
+                      <path
+                        d="M5.28 14.29c-.25-.72-.38-1.49-.38-2.29s.13-1.57.38-2.29V6.58H1.26C.46 8.18 0 9.99 0 12s.46 3.82 1.26 5.42l4.02-3.13z"
+                        fill="#FBBC05"
+                      />
+                      <path
+                        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.32 0 3.25 2.69 1.26 6.58l4.02 3.13c.95-2.83 3.6-4.96 6.72-4.96z"
+                        fill="#EA4335"
+                      />
+                    </svg>
+                  </div>
+                  <span>Continuar con Google Workspace</span>
+                  <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded text-white font-mono font-normal">
+                    OAuth 2.0
+                  </span>
+                </>
+              )}
             </button>
-          </form>
 
-          {/* Cuadro Informativo de Resolución Automática de Rol */}
+            {/* Separador de opciones */}
+            <div className="relative flex items-center justify-center my-4">
+              <div className="border-t border-[#E5E7EB] w-full" />
+              <span className="bg-white px-3 text-[11px] text-[#6B7280] uppercase tracking-wider font-medium shrink-0">
+                o verificar cuenta autorizada
+              </span>
+              <div className="border-t border-[#E5E7EB] w-full" />
+            </div>
+
+            {/* Input secundario para testing / demo */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                triggerSSOFlow(customEmail);
+              }}
+              className="space-y-2"
+            >
+              <div className="flex gap-2">
+                <input
+                  id="sso-email-input"
+                  type="email"
+                  value={customEmail}
+                  onChange={(e) => setCustomEmail(e.target.value)}
+                  placeholder="ofernando@ufm.edu"
+                  className="flex-1 h-9 px-3 rounded bg-white border border-[#E5E7EB] text-xs text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#9B1B30] focus:ring-1 focus:ring-[#9B1B30]"
+                />
+                <button
+                  type="submit"
+                  className="px-3.5 py-1.5 rounded bg-[#9B1B30] hover:bg-[#7A1C29] text-white text-xs font-semibold cursor-pointer border border-[#7A1C29] whitespace-nowrap shadow-2xs"
+                >
+                  Verificar Acceso
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Cuadro Informativo de Autenticación Institucional & Padrón */}
           <div className="my-5 p-3.5 rounded-lg bg-[#FDF2F4]/70 border border-[#7A1C29]/20 flex items-start gap-3 text-xs">
-            <Info className="w-4 h-4 text-[#7A1C29] shrink-0 mt-0.5" aria-hidden="true" />
+            <ShieldCheck className="w-4 h-4 text-[#7A1C29] shrink-0 mt-0.5" aria-hidden="true" />
             <div>
-              <p className="font-semibold text-[#7A1C29]">
-                Resolución Automática de Rol por Dominio y Claims
+              <p className="font-semibold text-[#7A1C29] flex items-center gap-1.5 flex-wrap">
+                <span>Padrón de Acceso Estudiantil UFM</span>
+                <span className="text-[10px] bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0] px-1.5 py-0.2 rounded font-mono font-bold">
+                  giannibruni412@gmail.com
+                </span>
+                <span className="text-[10px] bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0] px-1.5 py-0.2 rounded font-mono font-bold">
+                  ofernando@ufm.edu
+                </span>
               </p>
               <p className="text-[#4B5563] mt-0.5 leading-relaxed">
-                Al autenticar con Google OAuth, el callback inspecciona el dominio: cuentas{' '}
-                <code className="font-mono text-[#7A1C29]">@estudiante.ufm.edu</code> redirigen a{' '}
-                <code className="font-mono">/student/dashboard</code>; claustro{' '}
-                <code className="font-mono text-[#7A1C29]">@ufm.edu</code> a{' '}
-                <code className="font-mono">/faculty/dashboard</code>; y claims de decanatura a{' '}
-                <code className="font-mono">/admin/dashboard</code>.
+                Por políticas de claustro, el acceso al portal está estrictamente restringido a alumnos matriculados. Las cuentas <code className="font-mono text-[#7A1C29] font-bold">giannibruni412@gmail.com</code> y <code className="font-mono text-[#7A1C29] font-bold">ofernando@ufm.edu</code> están debidamente autorizadas con acceso pleno a cátedras, horarios y entregas con certeza inmutable mediante sellos SHA-256.
               </p>
             </div>
           </div>

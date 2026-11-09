@@ -17,6 +17,52 @@ export interface RoleResolutionResult {
   user: UserProfile;
 }
 
+export const AUTHORIZED_STUDENT_EMAILS: string[] = [
+  'ofernando@ufm.edu',
+  'giannibruni412@gmail.com',
+  'camila.morales@estudiante.ufm.edu',
+];
+
+export interface AuthorizationCheckResult {
+  isAuthorized: boolean;
+  email: string;
+  reason?: string;
+}
+
+/**
+ * Checks whether an email address is authorized in the institutional student roll.
+ */
+export function isEmailAuthorized(email: string): boolean {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return AUTHORIZED_STUDENT_EMAILS.some((auth) => auth.toLowerCase() === normalized);
+}
+
+/**
+ * Validates authorization status and returns diagnostic explanation if rejected.
+ */
+export function checkEmailAuthorization(email: string): AuthorizationCheckResult {
+  const normalized = (email || '').trim().toLowerCase();
+  if (!normalized) {
+    return {
+      isAuthorized: false,
+      email: normalized,
+      reason: 'No se ingresó ninguna cuenta de correo.',
+    };
+  }
+  if (!isEmailAuthorized(normalized)) {
+    return {
+      isAuthorized: false,
+      email: normalized,
+      reason: `Acceso No Autorizado (403): La cuenta '${normalized}' no figura en el padrón de alumnos matriculados para este ciclo académico. Cuentas autorizadas: ofernando@ufm.edu, giannibruni412@gmail.com.`,
+    };
+  }
+  return {
+    isAuthorized: true,
+    email: normalized,
+  };
+}
+
 const DEMO_USERS: Record<UserRole, UserProfile> = {
   student: {
     id: 'usr-student-01',
@@ -29,107 +75,76 @@ const DEMO_USERS: Record<UserRole, UserProfile> = {
     credits: 24,
     badgeText: 'Persona Libre y Responsable',
   },
-  faculty: {
-    id: 'usr-faculty-01',
-    name: 'Dr. Roberto Valdés',
-    email: 'r.valdes@ufm.edu',
-    role: 'faculty',
-    initials: 'RV',
-    departmentOrMajor: 'Ciencias de la Computación',
-    semesterOrTitle: 'Catedrático Titular',
-    badgeText: 'Libertad de Cátedra',
-  },
-  admin: {
-    id: 'usr-admin-01',
-    name: 'Decanatura de Ingeniería',
-    email: 'decanatura@ufm.edu',
-    role: 'admin',
-    initials: 'DI',
-    departmentOrMajor: 'Facultad de Ingeniería y Ciencias Económicas',
-    semesterOrTitle: 'Gobierno Académico',
-    badgeText: 'Excelencia y Libertad',
-  },
 };
 
 /**
- * Resolves the institutional role and redirect path from a Google Workspace email.
+ * Resolves the institutional user profile and routes to the student dashboard.
  */
 export function resolveRoleFromEmail(rawEmail: string): RoleResolutionResult {
   const normalized = rawEmail.trim().toLowerCase();
   const parts = normalized.split('@');
-  const localPart = parts[0] || 'usuario';
-  const domain = parts[1] || 'ufm.edu';
+  const localPart = parts[0] || 'estudiante';
+  const domain = parts[1] || 'estudiante.ufm.edu';
 
-  // 1. Student claim: @estudiante.ufm.edu or @estudiante.miu.edu or explicit student prefix
-  if (
-    domain === 'estudiante.ufm.edu' ||
-    domain === 'estudiante.miu.edu' ||
-    localPart.includes('estudiante') ||
-    localPart.includes('camila')
-  ) {
-    const customStudent: UserProfile =
-      normalized === DEMO_USERS.student.email
-        ? DEMO_USERS.student
-        : {
-            ...DEMO_USERS.student,
-            email: normalized,
-            name: formatNameFromLocalPart(localPart, DEMO_USERS.student.name),
-            initials: getInitialsFromLocalPart(localPart, 'CM'),
-          };
+  if (normalized === 'ofernando@ufm.edu') {
     return {
       role: 'student',
       targetRoute: '/student/dashboard',
-      domain,
-      claimDescription: 'Dominio @estudiante.ufm.edu verificado · Rol Estudiante de Grado',
-      user: customStudent,
+      domain: 'ufm.edu',
+      claimDescription: 'Alumno Autorizado · Facultad de Ciencias Económicas UFM',
+      user: {
+        id: 'usr-student-ofernando',
+        name: 'Fernando O.',
+        email: 'ofernando@ufm.edu',
+        role: 'student',
+        initials: 'FO',
+        departmentOrMajor: 'Computer Science & Economía',
+        semesterOrTitle: '6to Semestre',
+        credits: 24,
+        badgeText: 'Persona Libre y Responsable · Alumno Autorizado',
+      },
     };
   }
 
-  // 2. Admin / Dean claim: decanatura, admin, coord, rectoria
-  if (
-    localPart.includes('decanatura') ||
-    localPart.includes('decanato') ||
-    localPart.includes('admin') ||
-    localPart.includes('coord') ||
-    localPart.includes('rectoria')
-  ) {
-    const customAdmin: UserProfile =
-      normalized === DEMO_USERS.admin.email || normalized === 'decanatura.ingenieria@ufm.edu'
-        ? { ...DEMO_USERS.admin, email: normalized }
-        : {
-            ...DEMO_USERS.admin,
-            email: normalized,
-            name: formatNameFromLocalPart(localPart, DEMO_USERS.admin.name),
-            initials: getInitialsFromLocalPart(localPart, 'DI'),
-          };
+  if (normalized === 'giannibruni412@gmail.com') {
     return {
-      role: 'admin',
-      targetRoute: '/admin/dashboard',
-      domain,
-      claimDescription: 'Claim Administrativo / Decanatura verificado en @ufm.edu',
-      user: customAdmin,
+      role: 'student',
+      targetRoute: '/student/dashboard',
+      domain: 'gmail.com',
+      claimDescription: 'Alumno Autorizado · Facultad de Ciencias Económicas UFM',
+      user: {
+        id: 'usr-student-gianni',
+        name: 'Gianni Bruni',
+        email: 'giannibruni412@gmail.com',
+        role: 'student',
+        initials: 'GB',
+        departmentOrMajor: 'Computer Science & Economía',
+        semesterOrTitle: '6to Semestre',
+        credits: 24,
+        badgeText: 'Persona Libre y Responsable · Alumno Autorizado',
+      },
     };
   }
 
-  // 3. Faculty claim: @ufm.edu or @docente.miu.edu
-  const customFaculty: UserProfile =
-    normalized === DEMO_USERS.faculty.email
-      ? DEMO_USERS.faculty
+  const customStudent: UserProfile =
+    normalized === DEMO_USERS.student.email
+      ? DEMO_USERS.student
       : {
-          ...DEMO_USERS.faculty,
+          ...DEMO_USERS.student,
           email: normalized,
-          name: formatNameFromLocalPart(localPart, DEMO_USERS.faculty.name),
-          initials: getInitialsFromLocalPart(localPart, 'RV'),
+          name: formatNameFromLocalPart(localPart, DEMO_USERS.student.name),
+          initials: getInitialsFromLocalPart(localPart, 'CM'),
         };
 
   return {
-    role: 'faculty',
-    targetRoute: '/faculty/dashboard',
+    role: 'student',
+    targetRoute: '/student/dashboard',
     domain,
-    claimDescription: 'Claustro de Catedráticos @ufm.edu verificado · Libertad de Cátedra',
-    user: customFaculty,
+    claimDescription: 'Cuenta institucional verificada · Portal Estudiantil UFM',
+    user: customStudent,
   };
 }
+
 
 function formatNameFromLocalPart(localPart: string, fallback: string): string {
   if (!localPart || localPart.length < 2) return fallback;
@@ -441,4 +456,63 @@ export function verifySubmissionHashIntegrity(version: SubmissionVersion): {
     timestamp: now,
   };
 }
+
+export interface HashLookupResult {
+  queryHash: string;
+  isFormatValid: boolean;
+  isFound: boolean;
+  assignment?: Assignment;
+  version?: SubmissionVersion;
+  auditTrail: string;
+  verificationTimestamp: string;
+}
+
+/**
+ * Looks up any manual receipt hash against all assignments and their immutable versions.
+ */
+export function lookupReceiptHash(
+  queryHash: string,
+  assignments: Assignment[]
+): HashLookupResult {
+  const trimmed = queryHash.trim().toUpperCase();
+  const hashRegex = /^UFM-SHA256-[0-9A-F]{8}-[0-9A-F]{8}$/i;
+  const isFormatValid = hashRegex.test(trimmed);
+  const now = new Date().toISOString();
+
+  if (!isFormatValid) {
+    return {
+      queryHash: trimmed,
+      isFormatValid: false,
+      isFound: false,
+      auditTrail: `FORMATO INVÁLIDO: El identificador '${trimmed || 'VACÍO'}' no cumple con la nomenclatura estándar 'UFM-SHA256-XXXXXXXX-XXXXXXXX'.`,
+      verificationTimestamp: now,
+    };
+  }
+
+  for (const asg of assignments) {
+    const versions = resolveSubmissionHistory(asg);
+    for (const ver of versions) {
+      if (ver.receiptHash.toUpperCase() === trimmed) {
+        return {
+          queryHash: trimmed,
+          isFormatValid: true,
+          isFound: true,
+          assignment: asg,
+          version: ver,
+          auditTrail: `CERTIFICADO OFICIAL CONFIRMADO: La firma ${trimmed} está registrada inmutablemente en el libro de actas de la cátedra '${asg.courseName}' para la asignación '${asg.title}' (Versión ${ver.versionNumber}, entregada ${ver.submittedAt}).`,
+          verificationTimestamp: now,
+        };
+      }
+    }
+  }
+
+  return {
+    queryHash: trimmed,
+    isFormatValid: true,
+    isFound: false,
+    auditTrail: `HASH VÁLIDO PERO NO REGISTRADO: La firma ${trimmed} posee una estructura conforme a SHA-256 (FIPS 180-4), pero no corresponde a ninguna entrega del ciclo actual de este estudiante.`,
+    verificationTimestamp: now,
+  };
+}
+
 

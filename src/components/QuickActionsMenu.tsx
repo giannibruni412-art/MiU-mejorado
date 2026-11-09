@@ -17,6 +17,7 @@ import {
   calculateAcademicTranscriptSummary,
   generateAcademicReportCSV,
 } from '../utils/academicLogic';
+import { IntegrityVerifierModal } from './IntegrityVerifierModal';
 
 interface QuickActionsMenuProps {
   currentRoute: RoutePath;
@@ -100,7 +101,7 @@ export const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
   onNavigate,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<'grades' | 'resources' | null>(null);
+  const [activeModal, setActiveModal] = useState<'grades' | 'resources' | 'verifier' | null>(null);
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
 
   const transcript = calculateAcademicTranscriptSummary(assignments);
@@ -151,21 +152,11 @@ export const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
     );
   };
 
-  const roleQuickSwitch =
-    userRole === 'student'
-      ? {
-          label: 'Ir a Creación Rápida de Cátedra (Vista Catedrático)',
-          target: '/faculty/dashboard' as RoutePath,
-        }
-      : userRole === 'faculty'
-      ? {
-          label: 'Inspeccionar "Mi Semana" (Vista Estudiante)',
-          target: '/student/dashboard' as RoutePath,
-        }
-      : {
-          label: 'Ver Portal Estudiantil ("Mi Semana")',
-          target: '/student/dashboard' as RoutePath,
-        };
+  const quickJump = {
+    label: 'Cerrar Sesión / Volver a Acceso SSO',
+    target: '/login' as RoutePath,
+  };
+
 
   return (
     <>
@@ -332,7 +323,39 @@ export const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
                 </span>
               </button>
 
-              {/* 4. Toggle Theme Preference */}
+              {/* 4. Verificador de Integridad de Hash */}
+              <button
+                id="qa-verify-hash"
+                type="button"
+                onClick={() => {
+                  setActiveModal('verifier');
+                  setIsOpen(false);
+                }}
+                className={`w-full px-3 py-2.5 rounded-md text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                  isDarkMode ? 'hover:bg-[#334155]' : 'hover:bg-[#FDF2F4]'
+                }`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="w-7 h-7 rounded bg-[#ECFDF5] text-[#059669] flex items-center justify-center shrink-0 border border-[#A7F3D0]">
+                    <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">Verificador de Integridad</p>
+                    <p
+                      className={`text-[11px] truncate ${
+                        isDarkMode ? 'text-[#94A3B8]' : 'text-[#6B7280]'
+                      }`}
+                    >
+                      Validar hash manualmente (SHA-256)
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-[#059669] bg-[#ECFDF5] px-1.5 py-0.5 rounded border border-[#A7F3D0] shrink-0">
+                  Audit
+                </span>
+              </button>
+
+              {/* 5. Toggle Theme Preference */}
               <button
                 id="qa-toggle-theme"
                 type="button"
@@ -374,7 +397,7 @@ export const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
                   id="qa-role-shortcut"
                   type="button"
                   onClick={() => {
-                    onNavigate(roleQuickSwitch.target);
+                    onNavigate(quickJump.target);
                     setIsOpen(false);
                   }}
                   className={`w-full px-3 py-2 rounded-md text-left text-xs font-medium flex items-center justify-between transition-colors cursor-pointer ${
@@ -383,9 +406,10 @@ export const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
                       : 'text-[#7A1C29] hover:bg-[#FDF2F4]'
                   }`}
                 >
-                  <span className="truncate">{roleQuickSwitch.label}</span>
+                  <span className="truncate">{quickJump.label}</span>
                   <ArrowUpRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 </button>
+
               </div>
             </div>
           </div>
@@ -637,6 +661,15 @@ export const QuickActionsMenu: React.FC<QuickActionsMenuProps> = ({
           </div>
         </div>
       )}
+
+      {/* QUICK MODAL 3: VERIFICADOR DE INTEGRIDAD MANUAL DE HASH */}
+      <IntegrityVerifierModal
+        assignments={assignments}
+        isOpen={activeModal === 'verifier'}
+        onClose={() => setActiveModal(null)}
+        isDarkMode={isDarkMode}
+      />
     </>
   );
 };
+

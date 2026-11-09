@@ -20,6 +20,7 @@ import {
 } from './data/mockData';
 import {
   calculateStudentMetrics,
+  isEmailAuthorized,
   resolveRoleFromEmail,
   resolveSubmissionHistory,
   RoleResolutionResult,
@@ -27,20 +28,21 @@ import {
 import { TopBannerAndHeader } from './components/TopBannerAndHeader';
 import { LoginPortal } from './components/LoginPortal';
 import { StudentDashboard } from './components/StudentDashboard';
-import { FacultyDashboard } from './components/FacultyDashboard';
-import { AdminDashboard } from './components/AdminDashboard';
 import { QuickActionsMenu } from './components/QuickActionsMenu';
+import { initAuth, googleSignOut } from './utils/googleAuth';
 
 export default function App() {
   const [currentRoute, setCurrentRoute] = useState<RoutePath>('/login');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [accessDeniedMessage, setAccessDeniedMessage] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
-    return resolveRoleFromEmail('camila.morales@estudiante.ufm.edu').user;
+    return resolveRoleFromEmail('ofernando@ufm.edu').user;
   });
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 
-  const [courses, setCourses] = useState<CourseSection[]>(INITIAL_COURSES);
+  const [courses] = useState<CourseSection[]>(INITIAL_COURSES);
   const [assignments, setAssignments] = useState<Assignment[]>(INITIAL_ASSIGNMENTS);
-  const [announcements, setAnnouncements] = useState<InstitutionalAnnouncement[]>(
+  const [announcements] = useState<InstitutionalAnnouncement[]>(
     INITIAL_ANNOUNCEMENTS
   );
   const [dismissedBannerId, setDismissedBannerId] = useState<string | null>(null);
@@ -49,34 +51,78 @@ export default function App() {
     document.documentElement.classList.toggle('dark', isDarkMode);
   }, [isDarkMode]);
 
-  // Support URL hash / query parameter navigation (including ?autostart=1 or ?view=...)
+  // Real-time Firebase Google Auth state synchronization & authorization gating
+  useEffect(() => {
+    const unsubscribe = initAuth(
+      (firebaseUser, profile) => {
+        const userEmail = firebaseUser.email || '';
+        if (!isEmailAuthorized(userEmail)) {
+          googleSignOut();
+          setIsAuthenticated(false);
+          setAccessDeniedMessage(
+            `Acceso restringido: La cuenta '${userEmail}' no cuenta con autorización en el padrón de alumnos. Cuentas autorizadas: ofernando@ufm.edu.`
+          );
+          setCurrentRoute('/login');
+          return;
+        }
+        setAccessDeniedMessage(null);
+        setIsAuthenticated(true);
+        setCurrentUser(profile);
+        setCurrentRoute((prev) => (prev === '/login' ? '/student/dashboard' : prev));
+      },
+      () => {
+        setIsAuthenticated(false);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
+
+  // Support URL hash / query parameter navigation (?view=student or ?autostart=1)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const viewParam = params.get('view');
-    if (viewParam === 'student') {
-      handleNavigate('/student/dashboard');
-    } else if (viewParam === 'faculty') {
-      handleNavigate('/faculty/dashboard');
-    } else if (viewParam === 'admin') {
-      handleNavigate('/admin/dashboard');
-    } else if (params.get('autostart') === '1') {
+    if ((viewParam === 'student' || params.get('autostart') === '1') && isAuthenticated) {
       handleNavigate('/student/dashboard');
     }
-  }, []);
+  }, [isAuthenticated]);
 
   const handleNavigate = (route: RoutePath) => {
-    setCurrentRoute(route);
-    if (route === '/student/dashboard' && currentUser.role !== 'student') {
-      setCurrentUser(resolveRoleFromEmail('camila.morales@estudiante.ufm.edu').user);
-    } else if (route === '/faculty/dashboard' && currentUser.role !== 'faculty') {
-      setCurrentUser(resolveRoleFromEmail('r.valdes@ufm.edu').user);
-    } else if (route === '/admin/dashboard' && currentUser.role !== 'admin') {
-      setCurrentUser(resolveRoleFromEmail('decanatura@ufm.edu').user);
+    if (route === '/student/dashboard' && (!isAuthenticated || !isEmailAuthorized(currentUser.email))) {
+      setAccessDeniedMessage(
+        'Acceso Restringido: Se requiere autenticación con una cuenta autorizada (ej. ofernando@ufm.edu) para acceder al portal estudiantil.'
+      );
+      setCurrentRoute('/login');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
+    setAccessDeniedMessage(null);
+    setCurrentRoute(route);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await googleSignOut();
+    } catch (err) {
+      console.warn('Sign out notice:', err);
+    }
+    setIsAuthenticated(false);
+    setCurrentUser(resolveRoleFromEmail('ofernando@ufm.edu').user);
+    setCurrentRoute('/login');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCompleteSSO = (resolution: RoleResolutionResult) => {
+    if (!isEmailAuthorized(resolution.user.email)) {
+      setAccessDeniedMessage(
+        `Acceso No Autorizado: '${resolution.user.email}' no está registrado en el ciclo académico actual. Cuenta autorizada: ofernando@ufm.edu.`
+      );
+      setIsAuthenticated(false);
+      setCurrentRoute('/login');
+      return;
+    }
+    setAccessDeniedMessage(null);
+    setIsAuthenticated(true);
     setCurrentUser(resolution.user);
     setCurrentRoute(resolution.targetRoute);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -160,79 +206,12 @@ export default function App() {
     );
   };
 
-
-  const handleFacultyPublishAssignment = (
-    newAssignmentData: Omit<Assignment, 'id' | 'status'>
-  ) => {
-    const created: Assignment = {
-      ...newAssignmentData,
-      id: `asg-${Date.now()}`,
-      status: 'pending',
-    };
-    setAssignments((prev) => [created, ...prev]);
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === newAssignmentData.courseId
-          ? { ...c, pendingEvaluations: c.pendingEvaluations + 1 }
-          : c
-      )
-    );
-  };
-
-  const handleFacultyGradeSubmission = (assignmentId: string, score: number) => {
-    setAssignments((prev) =>
-      prev.map((asg) => {
-        if (asg.id !== assignmentId || !asg.submission) return asg;
-        return {
-          ...asg,
-          submission: {
-            ...asg.submission,
-            evaluationStatus: 'Calificada',
-            score,
-            rubric: asg.submission.rubric.map((r) => ({
-              ...r,
-              earned: r.weight,
-              feedback: 'Evaluado con excelencia bajo el estándar de la cátedra UFM.',
-            })),
-          },
-        };
-      })
-    );
-  };
-
-  const handlePublishAnnouncement = (
-    newAnn: Omit<
-      InstitutionalAnnouncement,
-      'id' | 'publishedAt' | 'reachCount' | 'activeOnPortal'
-    >
-  ) => {
-    const created: InstitutionalAnnouncement = {
-      ...newAnn,
-      id: `ann-${Date.now()}`,
-      publishedAt: 'Publicado hace instantes',
-      reachCount: 4820,
-      activeOnPortal: true,
-    };
-    setAnnouncements((prev) => [created, ...prev]);
-    if (created.channels.globalBanner) {
-      setDismissedBannerId(null);
-    }
-  };
-
-  const handleToggleAnnouncementStatus = (id: string) => {
-    setAnnouncements((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, activeOnPortal: !a.activeOnPortal } : a))
-    );
-  };
-
   const activeBannerAnnouncement = announcements.find(
     (a) => a.activeOnPortal && a.channels.globalBanner && a.id !== dismissedBannerId
   );
 
-  const studentMetrics = calculateStudentMetrics(assignments);
 
   const studentProfile = resolveRoleFromEmail('camila.morales@estudiante.ufm.edu').user;
-  const facultyProfile = resolveRoleFromEmail('r.valdes@ufm.edu').user;
 
   return (
     <div
@@ -250,42 +229,28 @@ export default function App() {
             setDismissedBannerId(activeBannerAnnouncement.id);
           }
         }}
+        onSignOut={handleSignOut}
       />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentRoute === '/login' && (
-          <LoginPortal onCompleteSSO={handleCompleteSSO} />
+          <LoginPortal
+            onCompleteSSO={handleCompleteSSO}
+            externalNotice={accessDeniedMessage}
+          />
         )}
 
         {currentRoute === '/student/dashboard' && (
           <StudentDashboard
-            student={currentUser.role === 'student' ? currentUser : studentProfile}
+            student={currentUser}
             assignments={assignments}
             schedule={WEEKLY_SCHEDULE}
             isDarkMode={isDarkMode}
             onSubmitAssignment={handleStudentSubmitAssignment}
           />
         )}
-
-        {currentRoute === '/faculty/dashboard' && (
-          <FacultyDashboard
-            professor={currentUser.role === 'faculty' ? currentUser : facultyProfile}
-            courses={courses}
-            assignments={assignments}
-            onPublishAssignment={handleFacultyPublishAssignment}
-            onGradeSubmission={handleFacultyGradeSubmission}
-          />
-        )}
-
-        {currentRoute === '/admin/dashboard' && (
-          <AdminDashboard
-            announcements={announcements}
-            totalAssignmentsCompletionRate={studentMetrics.completionRate}
-            onPublishAnnouncement={handlePublishAnnouncement}
-            onToggleAnnouncementStatus={handleToggleAnnouncementStatus}
-          />
-        )}
       </main>
+
 
       {/* FLOATING QUICK ACTIONS MENU FOR DASHBOARD VIEWS */}
       <QuickActionsMenu
